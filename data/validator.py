@@ -1,7 +1,14 @@
-def validate_tsetmc_data(data):
+def validate_snapshot(snapshot):
     """
-    بررسی اولیه کامل بودن داده‌های دریافت‌شده از TSETMC.
+    Validate the complete TSETMC snapshot.
     """
+
+    if snapshot is None:
+        return {
+            "status": "NEEDS_REVIEW",
+            "ok": False,
+            "missing": ["snapshot"],
+        }
 
     required_keys = [
         "closing",
@@ -13,11 +20,9 @@ def validate_tsetmc_data(data):
     missing = []
 
     for key in required_keys:
-        if key not in data:
+        if key not in snapshot:
             missing.append(key)
-            continue
-
-        if data[key] is None:
+        elif snapshot[key] is None:
             missing.append(key)
 
     if missing:
@@ -34,9 +39,17 @@ def validate_tsetmc_data(data):
     }
 
 
+def validate_tsetmc_data(data):
+    """
+    Backward-compatible validation function.
+    """
+
+    return validate_snapshot(data)
+
+
 def validate_instrument_search(data):
     """
-    بررسی نتیجه جستجوی نماد در TSETMC.
+    Validate instrument search response.
     """
 
     if data is None:
