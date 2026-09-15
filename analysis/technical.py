@@ -33,15 +33,8 @@ def calculate_rsi(series, period=14):
 
 
 def calculate_macd(series):
-    ema12 = series.ewm(
-        span=12,
-        adjust=False
-    ).mean()
-
-    ema26 = series.ewm(
-        span=26,
-        adjust=False
-    ).mean()
+    ema12 = series.ewm(span=12, adjust=False).mean()
+    ema26 = series.ewm(span=26, adjust=False).mean()
 
     macd = ema12 - ema26
 
@@ -55,17 +48,9 @@ def calculate_macd(series):
     return macd, signal, histogram
 
 
-def analyze_technical(history):
+def technical_analysis(history):
     """
-    تحلیل تکنیکال داده‌های تاریخی TSETMC.
-
-    خروجی:
-    - قیمت پایانی
-    - RSI
-    - MACD
-    - میانگین‌های 20/50/100/200
-    - حمایت و مقاومت 20 روزه
-    - میانگین حجم
+    Technical analysis compatible with app.py.
     """
 
     if history is None:
@@ -128,7 +113,7 @@ def analyze_technical(history):
         errors="coerce"
     )
 
-    df = df.dropna(subset=[close_col]).copy()
+    df = df.dropna(subset=[close_col])
 
     if df.empty:
         return {}
@@ -139,7 +124,6 @@ def analyze_technical(history):
 
     result["last_close"] = float(close.iloc[-1])
 
-    # Moving averages
     for period in [20, 50, 100, 200]:
         if len(close) >= period:
             result[f"sma_{period}"] = float(
@@ -148,7 +132,6 @@ def analyze_technical(history):
         else:
             result[f"sma_{period}"] = None
 
-    # RSI
     rsi = calculate_rsi(close)
 
     result["rsi_14"] = (
@@ -157,14 +140,12 @@ def analyze_technical(history):
         else None
     )
 
-    # MACD
     macd, signal, histogram = calculate_macd(close)
 
     result["macd"] = float(macd.iloc[-1])
     result["macd_signal"] = float(signal.iloc[-1])
     result["macd_histogram"] = float(histogram.iloc[-1])
 
-    # 20-day support/resistance
     lookback = min(20, len(close))
 
     result["support_20"] = float(
@@ -175,7 +156,6 @@ def analyze_technical(history):
         close.tail(lookback).max()
     )
 
-    # Volume
     if volume_col is not None:
         df[volume_col] = pd.to_numeric(
             df[volume_col],
@@ -193,7 +173,6 @@ def analyze_technical(history):
                 ).mean()
             )
 
-    # وضعیت قیمت نسبت به میانگین‌ها
     current = result["last_close"]
 
     result["above_sma20"] = (
@@ -217,3 +196,7 @@ def analyze_technical(history):
     )
 
     return result
+
+
+# Compatibility alias
+analyze_technical = technical_analysis
