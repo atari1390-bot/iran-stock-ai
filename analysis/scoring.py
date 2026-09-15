@@ -1,11 +1,77 @@
-def score_stock(t,b,f,v):
-    s=50
-    if v.get('status')!='OK':s-=15
-    if t.get('status')=='OK':
-        if t['last']>t['sma20']:s+=10
-        if t.get('rsi') is not None and 45<=t['rsi']<=65:s+=10
-        if t['macd']>t['macd_signal']:s+=10
-        if t.get('volume_avg20',0)>0 and t['volume_last']>t['volume_avg20']:s+=5
-    if b.get('status')=='OK':s+=3
-    if f.get('status')=='OK':s+=2
-    return max(0,min(100,s))
+def _num(value, default=0.0):
+    try:
+        if value is None:
+            return default
+        return float(value)
+    except Exception:
+        return default
+
+
+def score_stock(technical, orderbook, money_flow, validation):
+    """
+    امتیازدهی اولیه سهم از 0 تا 100.
+
+    وزن‌ها:
+    - تکنیکال: 40
+    - دفتر سفارش: 25
+    - جریان پول: 25
+    - اعتبار داده: 10
+
+    این امتیاز فعلاً «سیستم تصمیم‌گیری اولیه» است.
+    بعداً می‌توانیم با بک‌تست و داده واقعی TSETMC آن را بهینه کنیم.
+    """
+
+    technical = technical or {}
+    orderbook = orderbook or {}
+    money_flow = money_flow or {}
+    validation = validation or {}
+
+    score = 0.0
+
+    # =========================================================
+    # 1. اعتبار داده — حداکثر 10 امتیاز
+    # =========================================================
+
+    if validation.get("ok") is True:
+        score += 10
+
+    elif validation.get("status") == "NEEDS_REVIEW":
+        score += 3
+
+    # =========================================================
+    # 2. تکنیکال — حداکثر 40 امتیاز
+    # =========================================================
+
+    technical_score = 0
+
+    rsi = _num(technical.get("rsi_14"), None)
+
+    # RSI
+    if rsi is not None:
+        if 45 <= rsi <= 65:
+            technical_score += 10
+
+        elif 35 <= rsi < 45:
+            technical_score += 7
+
+        elif 65 < rsi <= 75:
+            technical_score += 6
+
+        elif rsi < 30:
+            technical_score += 3
+
+        elif rsi > 75:
+            technical_score += 2
+
+    # قیمت نسبت به میانگین‌ها
+    if technical.get("above_sma20"):
+        technical_score += 5
+
+    if technical.get("above_sma50"):
+        technical_score += 5
+
+    if technical.get("above_sma100"):
+        technical_score += 4
+
+    if technical.get("above_sma200"):
+        technical_score += 
