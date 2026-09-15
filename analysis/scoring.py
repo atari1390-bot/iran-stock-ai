@@ -42,6 +42,7 @@ def score_stock(technical, orderbook, money_flow, validation):
 
     rsi = _num(technical.get("rsi_14"), None)
 
+    # RSI
     if rsi is not None:
         if 45 <= rsi <= 65:
             technical_score += 10
